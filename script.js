@@ -153,7 +153,7 @@ async function onloadpage() {
     const inferEngine = new inferencejs.InferenceEngine();
 
     const modelName = "cube-detection-iv4gl";
-    const modelVersion = "1";
+    const modelVersion = "2";
 
     const API_KEY = "rf_Y6NjbvFG1pdwCSS3VWBEJyxjGIn1"; // publishable key
 
