@@ -2,22 +2,12 @@ Object.defineProperty(HTMLMediaElement.prototype, 'playing', {
     get: function(){
         return !!(this.currentTime > 0 && !this.paused && !this.ended && this.readyState > 2);
     }
-})
+});
 
-function drawBoundingBoxes(predictions, canvas, ctx, scalingRatio, sx, sy, fromDetectAPI = false) {
-    // if (predictions.length > 0) {
-    //   all_predictions = predictions;
-    // }
-  
-    // if (no_detection_count > 2) {
-    //   all_predictions = predictions;
-    //   no_detection_count = 0;
-    // }
-  
-    // if (predictions.length == 0) {
-    //   no_detection_count += 1;
-    // }
-  
+const FPS = 30;
+const FRAME_INCREMENT = 1/FPS;
+
+function drawBoundingBoxes(predictions, canvas, ctx, scalingRatio, sx, sy, fromDetectAPI = false) {  
     for (var i = 0; i < predictions.length; i++) {
         var confidence = predictions[i].confidence;
         ctx.scale(1, 1);
@@ -176,6 +166,7 @@ async function onloadpage() {
         if (!modelWorkerId) return requestAnimationFrame(detectFrame);
 
         playingLoop = videoPreview.playing;
+        // if (!videoPreview.playing) return;
     
         if (playingLoop) {
             inferEngine.infer(modelWorkerId, new inferencejs.CVImage(videoPreview)).then(function (predictions) {
@@ -187,6 +178,18 @@ async function onloadpage() {
 
                 ctx.drawImage(videoPreview, 0, 0, canvas.width, canvas.height);
                 drawBbox(ctx, videoPreview, tempPredictions);
+
+                // // Dừng video sau khi xử lý xong frame hiện tại
+                // videoPreview.pause();
+
+                // // Di chuyển đến frame tiếp theo
+                // videoPreview.currentTime += FRAME_INCREMENT;
+
+                // // Khi video đã sẵn sàng khung hình tiếp theo, tiếp tục phát và xử lý
+                // videoPreview.onseeked = function () {
+                //     videoPreview.play();
+                //     detectFrame(); // Gọi lại để xử lý frame tiếp theo
+                // };
             });
         } else {
             console.log(seqPredictions);

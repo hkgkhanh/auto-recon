@@ -1,18 +1,21 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Demo</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="styles/style.css">
     <script src="https://cdn.jsdelivr.net/npm/inferencejs@1.0.11"></script>
     <!-- <script src="https://cdn.jsdelivr.net/npm/inferencejs"></script> -->
 </head>
 <body>
     <video id="videoPreview" controls="false" style="display: none; margin: 20px; width: 640px;"></video>
     <canvas width="640" height="480" id="video_canvas"></canvas>
-    <!-- <image id="testimg" src="https://images.saymedia-content.com/.image/ar_4:3%2Cc_fill%2Ccs_srgb%2Cfl_progressive%2Cq_auto:eco%2Cw_1200/MTk2NDU0MDk3NjMxNTg1NDMw/ern-rubik-inventor-of-the-rubiks-cube.jpg"></image> -->
     <input type="file" id="videoInput" accept="video/*">
-    <script src="scripts/script.js"></script>
-    <script src="scripts/getFrame.js"></script>
+
+    <script src="scripts/opencv.js"></script>
+    <!-- <script src="scripts/script.js"></script> -->
+    <script src="scripts/newscript.js"></script>
+    <!-- <script src="scripts/getFrame.js"></script> -->
 </body>
 </html>
