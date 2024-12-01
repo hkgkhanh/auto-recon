@@ -6,6 +6,10 @@ var modelWorkerId;
 var playingLoop = false;
 var newModel;
 
+function padNumber(number, length) {
+    return number.toString().padStart(length, '0');
+}
+
 function drawBoundingBoxes(predictions, canvas, ctx, scalingRatio, sx, sy, fromDetectAPI = false) {  
     for (var i = 0; i < predictions.length; i++) {
         var confidence = predictions[i].confidence;
@@ -138,6 +142,7 @@ document.getElementById("videoInput").addEventListener("input", function (event)
     const modelVersion = "2";
     const API_KEY = "rf_Y6NjbvFG1pdwCSS3VWBEJyxjGIn1"; // publishable key
     const configuration = {scoreThreshold: 0.7, iouThreshold: 0.5, maxNumBoxes: 1};
+    modelWorkerId = null;
 
     async function getModel() {
         if (modelWorkerId != null) {
@@ -155,6 +160,9 @@ document.getElementById("videoInput").addEventListener("input", function (event)
         let totalFrames = 0;
         let currentFrame = 0;
 
+        let zip = new JSZip();
+        let frameImages = [];
+
         video.src = URL.createObjectURL(file);
         // video.style.display = "block";
         video.load();
@@ -162,6 +170,9 @@ document.getElementById("videoInput").addEventListener("input", function (event)
         video.onloadedmetadata = async function () {
             totalFrames = Math.floor(video.duration * VIDEO_FPS);
             seqPredictions = [];
+
+            zip = new JSZip();
+            frameImages = [];
 
             var [sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight, scalingRatio] = getCoordinates(video);
         
@@ -181,6 +192,25 @@ document.getElementById("videoInput").addEventListener("input", function (event)
                 console.log(seqPredictions);
                 console.log("Finished processing all frames.");
                 console.log("Video duration: " + video.duration);
+
+                inferEngine.stopWorker(modelWorkerId);
+
+                // document.getElementById("downloadImages").style.display = "block";
+                let downloadImagesButton = document.createElement("button");
+                downloadImagesButton.setAttribute("id", "downloadImages");
+                downloadImagesButton.textContent = "Download all images";
+
+                // Khi nhấn nút download tất cả frame
+                downloadImagesButton.addEventListener("click", async function () {
+                    const content = await zip.generateAsync({ type: "blob" });
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(content);
+                    link.download = "processed_frames.zip";
+                    link.click();
+                    downloadImagesButton.remove();
+                });
+                document.body.appendChild(downloadImagesButton);
+
                 return;
             }
 
@@ -201,6 +231,13 @@ document.getElementById("videoInput").addEventListener("input", function (event)
                     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                     drawBbox(ctx, video, tempPredictions);
                 });
+
+                // Lưu frame đã xử lý dưới dạng Base64
+                const frameData = canvas.toDataURL("image/png");
+                frameImages.push({ filename: `frame_${currentFrame}.png`, data: frameData });
+
+                // Thêm vào file ZIP
+                zip.file(`frame_${padNumber(currentFrame, 4)}.png`, frameData.split(',')[1], { base64: true });
                 
                 src.delete();
 
@@ -209,8 +246,6 @@ document.getElementById("videoInput").addEventListener("input", function (event)
                 processFrame();
             };
         };
-
-        // processFrame(); // Bắt đầu xử lý frame đầu tiên
     }
     event.target.value = '';
 });
