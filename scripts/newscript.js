@@ -2,6 +2,7 @@ const VIDEO_FPS = 30;
 const FRAME_INCREMENT = 1 / VIDEO_FPS;
 
 var seqPredictions = [];
+var cubePredictions = [];
 var modelWorkerId;
 var playingLoop = false;
 var newModel;
@@ -162,6 +163,7 @@ document.getElementById("videoInput").addEventListener("input", function (event)
 
         let zip = new JSZip();
         let frameImages = [];
+        let canvasFrames = [];
 
         video.src = URL.createObjectURL(file);
         // video.style.display = "block";
@@ -170,9 +172,11 @@ document.getElementById("videoInput").addEventListener("input", function (event)
         video.onloadedmetadata = async function () {
             totalFrames = Math.floor(video.duration * VIDEO_FPS);
             seqPredictions = [];
+            cubePredictions = [];
 
             zip = new JSZip();
             frameImages = [];
+            canvasFrames = [];
 
             var [sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight, scalingRatio] = getCoordinates(video);
         
@@ -187,13 +191,67 @@ document.getElementById("videoInput").addEventListener("input", function (event)
         };
 
         // Đọc và xử lý từng frame
-        const processFrame = () => {
+        const processFrame = async () => {
             if (currentFrame > totalFrames) {
                 console.log(seqPredictions);
                 console.log("Finished processing all frames.");
                 console.log("Video duration: " + video.duration);
+                console.log(canvasFrames);
 
                 inferEngine.stopWorker(modelWorkerId);
+
+                // post-process predictions
+                for (let i = 0; i < seqPredictions.length; i++) {
+                    let indexOfCube = -1;
+                    for (let j = 0; j < seqPredictions[i].length; j++) {
+                        if (seqPredictions[i][j].class == "cube") {
+                            indexOfCube = j;
+                            break;
+                        }
+                    }
+                    if (indexOfCube == -1) {
+                        cubePredictions.push(null);
+                    } else {
+                        cubePredictions.push(seqPredictions[i][indexOfCube]);
+                    }
+                }
+
+                let maxW = 0;
+                let maxH = 0;
+                for (let i = 0; i < cubePredictions.length; i++) {
+                    if (cubePredictions[i] != null) {
+                        if (cubePredictions[i].bbox.width > maxW) maxW = cubePredictions[i].bbox.width;
+                        if (cubePredictions[i].bbox.height > maxH) maxH = cubePredictions[i].bbox.height;
+                    }
+                }
+
+                for (let i = 0; i < cubePredictions.length; i++) {
+                    if (cubePredictions[i] != null) {
+                        let diffW = maxW - cubePredictions[i].bbox.width;
+                        let diffH = maxH - cubePredictions[i].bbox.height;
+
+                        cubePredictions[i].bbox.width = maxW;
+                        cubePredictions[i].bbox.height = maxH;
+
+                        cubePredictions[i].bbox.x -= diffW / 2;
+                        cubePredictions[i].bbox.y -= diffH / 2;
+                    }
+                }
+                console.log(cubePredictions);
+
+                for (let i = 0; i < canvasFrames.length; i++) {
+                    let tempctx = canvasFrames[i].getContext("2d");
+                    if (cubePredictions[i] != null) {
+                        drawBbox(tempctx, video, [cubePredictions[i]]);
+                    }
+                    
+                    let frameData = canvasFrames[i].toDataURL("image/png");
+                    let imageFileName = padNumber(i, 4);
+                    if (!frameImages.some(frame => frame.filename === `frame_${imageFileName}.png`)) {
+                        frameImages.push({ filename: `frame_${imageFileName}.png`, data: frameData });
+                        zip.file(`frame_${imageFileName}.png`, frameData.split(',')[1], { base64: true });
+                    }
+                }
 
                 // document.getElementById("downloadImages").style.display = "block";
                 let downloadImagesButton = document.createElement("button");
@@ -217,27 +275,43 @@ document.getElementById("videoInput").addEventListener("input", function (event)
             // Di chuyển tới thời gian của frame hiện tại
             video.currentTime = currentFrame / VIDEO_FPS;
 
-            video.onseeked = () => {
+            video.onseeked = async () => {
                 // Chuyển frame trên canvas thành ảnh OpenCV
                 const src = cv.imread(canvas);
                 console.log("Processing frame:", currentFrame + "/" + totalFrames);
 
-                inferEngine.infer(modelWorkerId, new inferencejs.CVImage(video)).then(function (predictions) {
+                await inferEngine.infer(modelWorkerId, new inferencejs.CVImage(video)).then(function (predictions) {
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
                     seqPredictions.push(predictions);
                     let tempPredictions = scalePrediction(predictions, video);
     
                     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                    // let frameData = canvas.toDataURL("image/png");
+                    // if (!frameImages.some(frame => frame.filename === `frame_${padNumber(currentFrame, 4)}.png`)) {
+                    //     let imageFileName = padNumber(currentFrame, 4);
+                    //     frameImages.push({ filename: `frame_${imageFileName}.png`, data: frameData });
+                    //     zip.file(`frame_${imageFileName}.png`, frameData.split(',')[1], { base64: true });
+                    // }
+
+                    // Lưu canvas hiện tại vào mảng
+                    const canvasCopy = document.createElement('canvas');
+                    canvasCopy.width = canvas.width;
+                    canvasCopy.height = canvas.height;
+                    const copyCtx = canvasCopy.getContext('2d');
+                    copyCtx.drawImage(canvas, 0, 0); // Sao chép nội dung canvas
+                    canvasFrames.push(canvasCopy);
+
                     drawBbox(ctx, video, tempPredictions);
                 });
 
-                // Lưu frame đã xử lý dưới dạng Base64
-                const frameData = canvas.toDataURL("image/png");
-                frameImages.push({ filename: `frame_${currentFrame}.png`, data: frameData });
+                // // Lưu frame đã xử lý dưới dạng Base64
+                // const frameData = canvas.toDataURL("image/png");
+                // frameImages.push({ filename: `frame_${currentFrame}.png`, data: frameData });
 
-                // Thêm vào file ZIP
-                zip.file(`frame_${padNumber(currentFrame, 4)}.png`, frameData.split(',')[1], { base64: true });
+                // // Thêm vào file ZIP
+                // zip.file(`frame_${padNumber(currentFrame, 4)}.png`, frameData.split(',')[1], { base64: true });
                 
                 src.delete();
 
