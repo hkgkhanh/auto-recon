@@ -275,16 +275,9 @@ document.getElementById("videoInput").addEventListener("input", function (event)
                     var y = tempPreds[i].bbox.y - tempPreds[i].bbox.height / 2;
                     var width = maxW;
                     var height = maxH;
-                
-                    // x -= sx;
-                    // y -= sy;
-            
-                    x *= scalingRatio;
-                    y *= scalingRatio;
-                    width *= scalingRatio;
-                    height *= scalingRatio;
                     
                     desCanvasCtx.drawImage(canvasPredBoxs[i], x, y, width, height, 0, 0, width, height);
+                    document.body.appendChild(desCanvas);
                     
                     let frameData = desCanvas.toDataURL("image/png");
                     let imageFileName = padNumber(i, 4);
