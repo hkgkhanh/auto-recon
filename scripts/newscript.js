@@ -121,17 +121,19 @@ function getCoordinates(img) {
     return [sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight, scalingRatio];
 }
 
-function scalePrediction(predictions, video) {
-    let canvasWidth = 640;
-    let canvasHeight = 480;
+function scalePrediction(predictions, video, canvasWidth = 640, canvasHeight = 480) {
+    // let canvasWidth = 640;
+    // let canvasHeight = 480;
     let scaleWidthFrac = canvasWidth / video.videoWidth;
     let scaleHeightFrac = canvasHeight / video.videoHeight;
     let preds = predictions;
     for (let prediction of preds) {
-        prediction.bbox.x *= scaleWidthFrac;
-        prediction.bbox.y *= scaleHeightFrac;
-        prediction.bbox.width *= scaleWidthFrac;
-        prediction.bbox.height *= scaleHeightFrac;
+        if (prediction != null) {
+            prediction.bbox.x *= scaleWidthFrac;
+            prediction.bbox.y *= scaleHeightFrac;
+            prediction.bbox.width *= scaleWidthFrac;
+            prediction.bbox.height *= scaleHeightFrac;
+        }
     }
     return preds;
 }
@@ -161,9 +163,13 @@ document.getElementById("videoInput").addEventListener("input", function (event)
         let totalFrames = 0;
         let currentFrame = 0;
 
-        let zip = new JSZip();
+        let imageszip = new JSZip();
         let frameImages = [];
         let canvasFrames = [];
+
+        let predboxzip = new JSZip();
+        let framePredBoxs = [];
+        let canvasPredBoxs = [];
 
         video.src = URL.createObjectURL(file);
         // video.style.display = "block";
@@ -174,9 +180,13 @@ document.getElementById("videoInput").addEventListener("input", function (event)
             seqPredictions = [];
             cubePredictions = [];
 
-            zip = new JSZip();
+            imageszip = new JSZip();
             frameImages = [];
             canvasFrames = [];
+
+            predboxzip = new JSZip();
+            framePredBoxs = [];
+            canvasPredBoxs = [];
 
             var [sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight, scalingRatio] = getCoordinates(video);
         
@@ -227,14 +237,8 @@ document.getElementById("videoInput").addEventListener("input", function (event)
 
                 for (let i = 0; i < cubePredictions.length; i++) {
                     if (cubePredictions[i] != null) {
-                        let diffW = maxW - cubePredictions[i].bbox.width;
-                        let diffH = maxH - cubePredictions[i].bbox.height;
-
                         cubePredictions[i].bbox.width = maxW;
                         cubePredictions[i].bbox.height = maxH;
-
-                        cubePredictions[i].bbox.x -= diffW / 2;
-                        cubePredictions[i].bbox.y -= diffH / 2;
                     }
                 }
                 console.log(cubePredictions);
@@ -249,18 +253,55 @@ document.getElementById("videoInput").addEventListener("input", function (event)
                     let imageFileName = padNumber(i, 4);
                     if (!frameImages.some(frame => frame.filename === `frame_${imageFileName}.png`)) {
                         frameImages.push({ filename: `frame_${imageFileName}.png`, data: frameData });
-                        zip.file(`frame_${imageFileName}.png`, frameData.split(',')[1], { base64: true });
+                        imageszip.file(`frame_${imageFileName}.png`, frameData.split(',')[1], { base64: true });
+                    }
+                }
+
+                let [sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight, scalingRatio] = getCoordinates(video);
+                let tempPreds = scalePrediction(cubePredictions, video, maxW * scalingRatio, maxH * scalingRatio);
+                // drawBoundingBoxes(predictions, video, ctx, scalingRatio, sx, sy);
+                for (let i = 0; i < canvasPredBoxs.length; i++) {
+                    let tempctx = canvasPredBoxs[i].getContext("2d");
+                    if (cubePredictions[i] == null) {
+                        continue;
+                    }
+
+                    let desCanvas = document.createElement("canvas");
+                    desCanvas.width = maxW;
+                    desCanvas.height = maxH;
+                    let desCanvasCtx = desCanvas.getContext("2d");
+
+                    var x = tempPreds[i].bbox.x - tempPreds[i].bbox.width / 2;
+                    var y = tempPreds[i].bbox.y - tempPreds[i].bbox.height / 2;
+                    var width = maxW;
+                    var height = maxH;
+                
+                    // x -= sx;
+                    // y -= sy;
+            
+                    x *= scalingRatio;
+                    y *= scalingRatio;
+                    width *= scalingRatio;
+                    height *= scalingRatio;
+                    
+                    desCanvasCtx.drawImage(canvasPredBoxs[i], x, y, width, height, 0, 0, width, height);
+                    
+                    let frameData = desCanvas.toDataURL("image/png");
+                    let imageFileName = padNumber(i, 4);
+                    if (!frameImages.some(frame => frame.filename === `pred_frame_${imageFileName}.png`)) {
+                        frameImages.push({ filename: `pred_frame_${imageFileName}.png`, data: frameData });
+                        predboxzip.file(`pred_frame_${imageFileName}.png`, frameData.split(',')[1], { base64: true });
                     }
                 }
 
                 // document.getElementById("downloadImages").style.display = "block";
                 let downloadImagesButton = document.createElement("button");
                 downloadImagesButton.setAttribute("id", "downloadImages");
-                downloadImagesButton.textContent = "Download all images";
+                downloadImagesButton.textContent = "Download all images (full)";
 
                 // Khi nhấn nút download tất cả frame
                 downloadImagesButton.addEventListener("click", async function () {
-                    const content = await zip.generateAsync({ type: "blob" });
+                    const content = await imageszip.generateAsync({ type: "blob" });
                     const link = document.createElement("a");
                     link.href = URL.createObjectURL(content);
                     link.download = "processed_frames.zip";
@@ -268,6 +309,21 @@ document.getElementById("videoInput").addEventListener("input", function (event)
                     downloadImagesButton.remove();
                 });
                 document.body.appendChild(downloadImagesButton);
+
+                let downloadPredImagesButton = document.createElement("button");
+                downloadPredImagesButton.setAttribute("id", "downloadPredImages");
+                downloadPredImagesButton.textContent = "Download all prediction images";
+
+                // Khi nhấn nút download tất cả frame
+                downloadPredImagesButton.addEventListener("click", async function () {
+                    const content = await predboxzip.generateAsync({ type: "blob" });
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(content);
+                    link.download = "processed_pred_frames.zip";
+                    link.click();
+                    downloadPredImagesButton.remove();
+                });
+                document.body.appendChild(downloadPredImagesButton);
 
                 return;
             }
@@ -296,12 +352,19 @@ document.getElementById("videoInput").addEventListener("input", function (event)
                     // }
 
                     // Lưu canvas hiện tại vào mảng
-                    const canvasCopy = document.createElement('canvas');
+                    let canvasCopy = document.createElement('canvas');
                     canvasCopy.width = canvas.width;
                     canvasCopy.height = canvas.height;
                     const copyCtx = canvasCopy.getContext('2d');
                     copyCtx.drawImage(canvas, 0, 0); // Sao chép nội dung canvas
                     canvasFrames.push(canvasCopy);
+
+                    let canvasPredCopy = document.createElement('canvas');
+                    canvasPredCopy.width = canvas.width;
+                    canvasPredCopy.height = canvas.height;
+                    const copyPredCtx = canvasPredCopy.getContext('2d');
+                    copyPredCtx.drawImage(canvas, 0, 0); // Sao chép nội dung canvas
+                    canvasPredBoxs.push(canvasPredCopy);
 
                     drawBbox(ctx, video, tempPredictions);
                 });
