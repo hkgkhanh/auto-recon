@@ -258,8 +258,7 @@ document.getElementById("videoInput").addEventListener("input", function (event)
                 }
 
                 let [sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight, scalingRatio] = getCoordinates(video);
-                let tempPreds = scalePrediction(cubePredictions, video, maxW * scalingRatio, maxH * scalingRatio);
-                // drawBoundingBoxes(predictions, video, ctx, scalingRatio, sx, sy);
+                let tempPreds = scalePrediction(cubePredictions, video, maxW, maxH);
                 for (let i = 0; i < canvasPredBoxs.length; i++) {
                     let tempctx = canvasPredBoxs[i].getContext("2d");
                     if (cubePredictions[i] == null) {
@@ -271,8 +270,8 @@ document.getElementById("videoInput").addEventListener("input", function (event)
                     desCanvas.height = maxH;
                     let desCanvasCtx = desCanvas.getContext("2d");
 
-                    var x = tempPreds[i].bbox.x - tempPreds[i].bbox.width / 2;
-                    var y = tempPreds[i].bbox.y - tempPreds[i].bbox.height / 2;
+                    var x = (cubePredictions[i].bbox.x - cubePredictions[i].bbox.width / 2) * video.videoWidth / maxW;
+                    var y = (cubePredictions[i].bbox.y - cubePredictions[i].bbox.height / 2) * video.videoHeight / maxH;
                     var width = maxW;
                     var height = maxH;
                     
@@ -287,7 +286,6 @@ document.getElementById("videoInput").addEventListener("input", function (event)
                     }
                 }
 
-                // document.getElementById("downloadImages").style.display = "block";
                 let downloadImagesButton = document.createElement("button");
                 downloadImagesButton.setAttribute("id", "downloadImages");
                 downloadImagesButton.textContent = "Download all images (full)";
@@ -337,13 +335,6 @@ document.getElementById("videoInput").addEventListener("input", function (event)
     
                     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-                    // let frameData = canvas.toDataURL("image/png");
-                    // if (!frameImages.some(frame => frame.filename === `frame_${padNumber(currentFrame, 4)}.png`)) {
-                    //     let imageFileName = padNumber(currentFrame, 4);
-                    //     frameImages.push({ filename: `frame_${imageFileName}.png`, data: frameData });
-                    //     zip.file(`frame_${imageFileName}.png`, frameData.split(',')[1], { base64: true });
-                    // }
-
                     // Lưu canvas hiện tại vào mảng
                     let canvasCopy = document.createElement('canvas');
                     canvasCopy.width = canvas.width;
@@ -361,13 +352,6 @@ document.getElementById("videoInput").addEventListener("input", function (event)
 
                     drawBbox(ctx, video, tempPredictions);
                 });
-
-                // // Lưu frame đã xử lý dưới dạng Base64
-                // const frameData = canvas.toDataURL("image/png");
-                // frameImages.push({ filename: `frame_${currentFrame}.png`, data: frameData });
-
-                // // Thêm vào file ZIP
-                // zip.file(`frame_${padNumber(currentFrame, 4)}.png`, frameData.split(',')[1], { base64: true });
                 
                 src.delete();
 
