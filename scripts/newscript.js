@@ -190,8 +190,8 @@ document.getElementById("videoInput").addEventListener("input", function (event)
 
             var [sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight, scalingRatio] = getCoordinates(video);
         
-            canvas.width = 640;
-            canvas.height = 480;
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
 
             newModel.then((workerId) => {
                 modelWorkerId = workerId;
@@ -331,7 +331,7 @@ document.getElementById("videoInput").addEventListener("input", function (event)
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
                     seqPredictions.push(predictions);
-                    let tempPredictions = scalePrediction(predictions, video);
+                    let tempPredictions = scalePrediction(predictions, video, canvas.width, canvas.height);
     
                     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
