@@ -363,3 +363,6 @@ document.getElementById("videoInput").addEventListener("input", function (event)
     }
     event.target.value = '';
 });
+
+
+// non local maximum suppression
