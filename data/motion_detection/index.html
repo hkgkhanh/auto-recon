@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>motion detection</title>
+		<!-- <script src="p5.min.js"></script> -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/p5.js"></script>
+    	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/addons/p5.dom.min.js"></script>
+    	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/addons/p5.sound.min.js"></script>
+		<script src="CCapture.all.min.js"></script>
+    	<script src="flow.js"></script>
+    	<script src="Graph.js"></script>
+		<script src="sketch.js"></script>
+	</head>
+	<body>
+
+		<label for="myfile">Select a file:</label>
+  		<input type="file" id="myfile" name="myfile">
+		<input type="submit" value="Submit" onclick="doSomething()"><br><br>
+
+		<video id="inputvid" controls>
+		</video>
+
+		<video id="outputvid" controls>
+		</video>
+
+		<script type="text/javascript">
+			function doSomething() {
+				let path = document.getElementById("myfile").value;
+
+				let i = path.length - 1;
+				while (i >= 0 && path[i] != "\\") {
+					i--;
+				}
+				path = path.slice(i + 1);
+
+				document.getElementById("inputvid").src = path;
+			}
+		</script>
+
+	</body>
+</html>

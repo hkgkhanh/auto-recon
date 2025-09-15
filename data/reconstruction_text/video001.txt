@@ -1,0 +1,66 @@
+Video #001
+https://youtu.be/92V4jPhZ3aw?si=08cZ2BpubJqmuWAK
+Solve #001 (0:16-0:24)
+
+Scramble: B' D2 L2 U2 B2 R D2 F2 R D2 F2 L U2 D' B D R' B' L' F R2
+
+z2 y' // inspection
+R U' R' F R2 D2 R' // cross
+y R' U R // F2L1
+U' R U' R' L U' L' // F2L2
+R U' R' U R' F R U' F' // F2L3+4
+U' r U R' U R U2 x' U L' U L U2 L' // OLL
+U R2 u R' U R' U' R u' R2 F' U F U' // PLL
+
+Video #001
+https://youtu.be/92V4jPhZ3aw?si=08cZ2BpubJqmuWAK
+Solve #002 (0:42-0:48)
+
+Scramble: F2 U' L2 D B2 U2 B2 L2 B2 U' L2 D' R' B D L D B' R2 B' R
+
+x2 // inspection
+R' F' D' R2 B' R' // cross
+U R' U2 R // F2L1
+y' U R' U' R F R' F' R // F2L2
+y R U' R' U' y R' U R // F2L3
+U' L' U L U' L' U L // F2L4
+U2 r' U2 R U R' U r U' // OLL
+
+Video #001
+https://youtu.be/92V4jPhZ3aw?si=08cZ2BpubJqmuWAK
+Solve #003 (1:20-1:29)
+
+Scramble: B' U D R2 U B R' U' L' D' F2 D' F2 R2 F2 R2 D' B2 U2 D' L2
+
+x' // inspection
+F R' D' R2 U' x' D R' U' D // cross
+R' U' U2 R L' U L // F2L1
+R' U R U' R U R' // F2L2
+y U R' U' R y U' R U R' // F2L3
+U y' R U R' // F2L4
+U' U' R' F R2 B' R2 F' R2 B R // OLL
+U' x R' U R' D2 R U' R' D2 R2 B2 // PLL
+
+Video #001
+https://youtu.be/92V4jPhZ3aw?si=08cZ2BpubJqmuWAK
+Solve #004 (1:52-2:00)
+
+Scramble: F2 D2 U2 R2 F2 R' F2 R2 U2 F2 D2 U R U L' U' B' F' L' U
+
+x' z' // inspection
+D' r R2 D' R2 // cross
+U R' U y' L U' L' // F2L1
+U L' U L // F2L2
+U' R U' R' U R U R' // F2L3
+U' R' U2 R U' R' U R // F2L4
+U R U2 R2 U' R2 U' R2 U2 R // OLL
+U R2 F2 R U2 R U2 R' F R U R' U' R' F R2 U2 // PLL
+
+Video #001
+https://youtu.be/92V4jPhZ3aw?si=08cZ2BpubJqmuWAK
+Solve #005 (2:28-2:35)
+
+Scramble: L2 R2 D U L2 B2 D2 U R' F' D' B' F D2 L2 U L' R
+
+x // inspection
+U L' l' U2
